@@ -15,7 +15,7 @@ __pycache__/
 # Coverage output
 /web/.coverage
 /web/htmlcov/
-
+../migrations/versions/a504e348d6a9_.py
 # credentials and SSL certs
 *.env
 *~

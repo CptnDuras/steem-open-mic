@@ -2,11 +2,12 @@
 import json
 
 import pandas as pd
-from flask import request, Blueprint, jsonify
+from flask import request, Blueprint, jsonify, render_template
 from datetime import datetime
 
 from sqlalchemy import and_, text
 
+from web.app.models import LastBlock
 from web.app.utilities import apply_filter_to_query, create_video_summary_fields, Post, apply_sort_to_query
 from web.app.utilities import get_age_string, markdown_to_safe_html, get_payout_string, get_sparkline_data_from_content
 from web.app.config import DEBUGGING_KEY
@@ -212,19 +213,19 @@ def raw_replies(author, permlink):
     return str(replies)
 
 
-@public_blueprint.route(f'/f/api/{DEBUGGING_KEY}/status')
-def status():
+@public_blueprint.route(f'/f/api/{DEBUGGING_KEY}/status/data')
+def status_data():
     from web.app import db, steem
     # get the last block from the DB
     try:
-        last_block = db.session.query(Post).order_by(Post.id.desc()).first().block_number
+        last_block = db.session.query(LastBlock).first().number
     except:
         last_block = 0
 
     # get the last block from steem
     head_block = steem.head_block_number
     # calculate the delay between the last block on the chain, and the DB
-    db_delay = (head_block - last_block) * 3
+    db_lag = (head_block - last_block) * 3
     # Get the number of posts in the DB
     db_posts = db.session.query(Post.id).count()
     # See how many posts are needing steem update
@@ -236,16 +237,29 @@ def status():
         Post.pending_video_info_update == True
     ).count()
 
-    html = f"""
-        Steem Blockchain Head Block: {head_block} <br>
-        Database Head Block: {last_block} <br>
-        Approximate Database Head Delay Seconds: {db_delay} <br>
-        Posts in Database: {db_posts} <br>
-        Posts Pending Steem Info Update: {pending_steem} <br>
-        Posts Pending Video Info Update: {pending_video} <br>
-    """
+    data = {
+        "head_block": head_block,
+        "last_block": last_block,
+        "db_lag": db_lag,
+        "db_posts": db_posts,
+        "pending_steem_update": pending_steem,
+        "pending_video_update": pending_video,
+    }
 
-    return html
+    # html = f"""
+    #     Steem Blockchain Head Block: {head_block} <br>
+    #     Database Head Block: {last_block} <br>
+    #     Approximate Database Head Delay Seconds: {db_lag} <br>
+    #     Posts in Database: {db_posts} <br>
+    #     Posts Pending Steem Info Update: {pending_steem} <br>
+    #     Posts Pending Video Info Update: {pending_video} <br>
+    # """
+
+    return jsonify(data)
+
+@public_blueprint.route(f'/f/api/{DEBUGGING_KEY}/status')
+def status():
+    return render_template("status.html")
 
 
 # to explore how better full text search might be done

@@ -7,8 +7,11 @@ import bleach
 import markdown
 import pandas as pd
 import re
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from .models import *
+from web.app.config import SQLALCHEMY_DATABASE_URI
+from web.app.models import *
 
 # compile regex for checking for youtube videos
 youtube_video_regex = '((\n.{0,3})|(src\s?=\s?.{1}))((http(s)?://youtu.be/)|(http(s)?://www.youtube.com/embed/)|(http(s)?://www.youtube.com/)|(http(s)?://m.youtube.com/))(watch\?v=)?(?P<videoid>(\w|\_|\-)+)'
@@ -138,12 +141,19 @@ def get_valid_video(comment):
         return None, None, None
 
     category = comment.get('category', '')
+
     if not category:
         try:
-            category = metadata['tags'][0]
+            category = ", ".join(metadata['tags'])
         except Exception as ex:
             log(f"Problem getting metadata: {ex}\n{traceback.format_exc()}")
-            category = 'Unknown'
+            return None, None, None
+
+    # if it's not openmic. Die
+    if "openmic" not in category.split(", "):
+        return None, None, None
+    else:
+        log("Found openmic")
 
     # see if it's a dlive video
     try:
@@ -158,8 +168,8 @@ def get_valid_video(comment):
 
     # see if it's a dtube video, and use 480 version if available - todo - store both hashs?
     try:
-        if metadata['app'].find('dtube') >= 0 \
-                or comment['parent_permlink'] == 'dtube':  # sometimes dtube video are shown with app: steemit
+        # sometimes dtube video are shown with app: steemit
+        if metadata['app'].find('dtube') >= 0 or comment['parent_permlink'] == 'dtube':
             content = metadata['video']['content']
             video_id = content.get('videohash', '')
             video_id = content.get('video480hash', video_id)
@@ -178,7 +188,7 @@ def get_valid_video(comment):
         else:
             media_id = None
 
-        excluded_ids = ["channel", "edit", "watch", "c", "user", "playlist"]
+        excluded_ids = ["channel", "edit", "watch", "c", "user", "playlist", None]
         if media_id not in excluded_ids:  # exclude invalid video ids
             log('YouTube Video: ' + media_id)  # for debugging regex
             return 'youtube', media_id, category
@@ -326,3 +336,57 @@ def apply_sort_to_query(original_query, filter_data):
     elif filter_data.get('filter_sort_selection', 'all') == 'hot':
         sort_order = Post.hot_score.desc()
     return new_query.order_by(sort_order)
+
+
+class DBConnection(object):
+    """
+    This creates a DBConnection object that can be used in a with: block
+    This will automatically clean up after itself
+    example:
+    ```
+    with DBConnection() as db:
+        users = db.session.query(User).all()
+    ```
+    """
+
+    def __init__(self, constring=""):
+        """
+        Create a new instance of the DBConnection Object, for use during a with:
+        :param string constring: A specific connection string (default "")
+        """
+        self.constring = constring
+        self.session = None
+
+    def __enter__(self):
+        """
+        Sets up the entry point of the session
+        :return: self
+        """
+        # Setup the connection string if one's not been provided
+        if self.constring == "":
+            self.constring = SQLALCHEMY_DATABASE_URI
+
+        # Setup the engine to use
+        self.engine = create_engine(self.constring, echo=False)
+
+        # Create a new SessionMaker
+        session_maker = sessionmaker(bind=self.engine)
+
+        # create a session with session_maker()
+        self.session = session_maker()
+
+        # Return this whole object for use
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Commands to run after with:block has ended
+        :param exc_type: NA
+        :param exc_val: NA
+        :param exc_tb: NA
+        :return:
+        """
+        # Close session
+        self.session.close()
+        # Dispose of the engine
+        self.engine.dispose()

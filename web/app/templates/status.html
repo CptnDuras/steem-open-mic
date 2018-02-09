@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+          integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+          crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+          integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+          crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+  <div class="col-sm">
+    <div class="input-group">
+      <div class="input-group-prepend">
+        <span class="input-group-text">Head steem block</span>
+      </div>
+      <input class="form-control" id="head_block">
+
+    </div>
+    <div class="input-group">
+      <div class="input-group-prepend">
+        <span class="input-group-text">Head db block</span>
+      </div>
+      <input class="form-control" id="last_block"/>
+    </div>
+    <div class="input-group">
+      <div class="input-group-prepend">
+        <span class="input-group-text">Lag (Time)</span>
+      </div>
+      <input class="form-control" id="db_lag"/>
+    </div>
+    <div class="input-group">
+      <div class="input-group-prepend">
+        <span class="input-group-text">Lag (blocks)</span>
+      </div>
+      <input class="form-control" id="db_lag_blocks"/>
+    </div>
+    <div class="input-group">
+      <div class="input-group-prepend">
+        <span class="input-group-text">Posts Pending Steem Info Update:</span>
+      </div>
+      <input class="form-control" id="pending_steem"/>
+    </div>
+    <div class="input-group">
+      <div class="input-group-prepend">
+        <span class="input-group-text">Posts Pending Video Info Update</span>
+      </div>
+      <input class="form-control" id="pending_video"/>
+    </div>
+  </div>
+</div>
+<script>
+    var status_data = {};
+
+    function get_data() {
+        $.get("{{ url_for('public.status_data') }}", function (data, status) {
+            // console.log(`Data: ${data}\n Status: ${status}`);
+            status_data = data;
+        });
+        $("#head_block").val(status_data.head_block);
+        $("#last_block").val(status_data.last_block);
+        $("#db_lag").val(status_data.db_lag);
+        $("#db_lag_blocks").val(status_data.head_block - status_data.last_block);
+        $("#pending_steem").val(status_data.pending_steem_update);
+        $("#pending_video").val(status_data.pending_video_update);
+        // console.log(`Lag time: ${status_data.db_lag}`);
+    }
+
+    get_data();
+    setInterval(get_data, 5000);
+</script>
+</body>
+</html>

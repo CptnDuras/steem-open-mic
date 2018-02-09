@@ -1,16 +1,20 @@
 import time
 import json
+import traceback
+
 import requests
 
 from datetime import datetime, timedelta
 from threading import Thread
-from . import app, db
-from .models import Post
-from .utilities import log,  seconds_from_youtube_duration, get_valid_video, markdown_to_safe_html
-from .utilities import get_sparkline_data_from_content, get_voters_list_from_content
-from steem import Steem
 
-steem = Steem(nodes=app.config['STEEM_NODES'])
+from sqlalchemy import text
+
+from webapp import app, db, steem
+from models import Post
+from utilities import log,  seconds_from_youtube_duration, get_valid_video, markdown_to_safe_html
+from utilities import get_sparkline_data_from_content, get_voters_list_from_content
+
+from web.app.utilities import DBConnection
 
 
 class PostUpdateThread(Thread):
@@ -19,92 +23,83 @@ class PostUpdateThread(Thread):
         self.app = app
         self.db = db
 
+        self.posts_to_delete = []
+
     # update scores of posts created within last week, set older post scores to 0
     def updatePostScores(self):
         try:
             # Shouldn't this use SQLAlchemy?
             # Todo: Test performance against raw SQLAlchemy updates
-            q = '''
-                    update posts set
-                        trending_score =
-                        (pow(pending_payout_value, 0.4) * 1000000) / pow(EXTRACT(EPOCH FROM current_timestamp - created) + 300, 0.2),
-                        hot_score =
-                        (sqrt(pending_payout_value - least(9.99, pending_payout_value)) * 1000000) / (EXTRACT(EPOCH FROM current_timestamp - created) + 60)
-                        where EXTRACT(EPOCH FROM current_timestamp - created) > 600
-                        and EXTRACT(EPOCH FROM current_timestamp - created) < 604800
-                    '''
-            db.engine.execute(text(q).execution_options(autocommit=True))
-            q = '''
-                    update posts set
-                        trending_score = 0, hot_score = 0
-                        where EXTRACT(EPOCH FROM current_timestamp - created) >= 604800
-                        and trending_score > 0
-                    '''
-            db.engine.execute(text(q).execution_options(autocommit=True))
+            with DBConnection() as db:
+                q = '''
+                        update posts set
+                            trending_score =
+                            (pow(pending_payout_value, 0.4) * 1000000) / pow(EXTRACT(EPOCH FROM current_timestamp - created) + 300, 0.2),
+                            hot_score =
+                            (sqrt(pending_payout_value - least(9.99, pending_payout_value)) * 1000000) / (EXTRACT(EPOCH FROM current_timestamp - created) + 60)
+                            where EXTRACT(EPOCH FROM current_timestamp - created) > 600
+                            and EXTRACT(EPOCH FROM current_timestamp - created) < 604800
+                        '''
+                db.engine.execute(text(q).execution_options(autocommit=True))
+                q = '''
+                        update posts set
+                            trending_score = 0, hot_score = 0
+                            where EXTRACT(EPOCH FROM current_timestamp - created) >= 604800
+                            and trending_score > 0
+                        '''
+                db.engine.execute(text(q).execution_options(autocommit=True))
 
-        except Exception as e:
+        except Exception as ex:
             log('Failed to update scores...')
-            log(str(e))
+            log(f"{ex}\n{traceback.format_exc()}")
 
     # query Steem API node for up to date content, and add to post
     def update_steem_info(self, post):
-        try:
-            # trap http type errors and retry fetch
-            content = {}
-            while not content:
-                try:
-                    content = steem.get_content(post.author, post.permlink)
-                except Exception as e:
-                    log('Problem getting Steem info from API for: @' + post.author + '/' + post.permlink + '!')
-                    log(str(e))
-                    time.sleep(5)
+        with DBConnection() as db:
+            try:
+                # trap http type errors and retry fetch
+                content = {}
+                while not content:
+                    try:
+                        content = steem.get_content(post.author, post.permlink)
+                    except Exception as e:
+                        log('Problem getting Steem info from API for: @' + post.author + '/' + post.permlink + '!')
+                        log(f"{ex}\n{traceback.format_exc()}")
 
-            post.created = datetime.strptime(content['created'], '%Y-%m-%dT%H:%M:%S')
-            post.category = content['category']
+                post.created = datetime.strptime(content['created'], '%Y-%m-%dT%H:%M:%S')
+                post.category = content['category']
 
-            js = content.get('json_metadata', '[]')
-            metadata = json.loads(js)
-            tags = metadata.get('tags', [])
+                js = content.get('json_metadata', '[]')
+                metadata = json.loads(js)
+                tags = metadata.get('tags', [])
 
-            post.tags = ' '.join(tags)
-            post.is_nsfw = True if post.tags.lower().find('nsfw') >= 0 else False
-            post.title = content['title']
-            post.has_declined_payout = False if float(content['max_accepted_payout'].split(' ')[0]) > 0 else True
-            post.pending_payout_value = float(content['pending_payout_value'].split(' ')[0])
-            post.total_payout_value = float(content['total_payout_value'].split(' ')[0])
-            post.has_paidout = True if post.total_payout_value > 0 else False
-            post.steem_json = content # todo - decide what of this should be stored
-            post.steem_thumbnail_image_url = ''
+                post.tags = ' '.join(tags)
+                post.is_nsfw = True if post.tags.lower().find('nsfw') >= 0 else False
+                post.title = content['title']
+                post.has_declined_payout = False if float(content['max_accepted_payout'].split(' ')[0]) > 0 else True
+                post.pending_payout_value = float(content['pending_payout_value'].split(' ')[0])
+                post.total_payout_value = float(content['total_payout_value'].split(' ')[0])
+                post.has_paidout = True if post.total_payout_value > 0 else False
+                post.steem_json = content # todo - decide what of this should be stored
+                post.steem_thumbnail_image_url = ''
 
-            new_type, new_video_id, new_category = get_valid_video(content)
+                new_type, new_video_id, new_category = get_valid_video(content)
 
-            # if valid on update, use new values, otherwise assume old values remain
-            # this check is applied so dtube posts, edited in steemit are still retained
-            if new_type and new_video_id and new_category:
-                post.video_type, post.video_id, post.category = new_type, new_video_id, new_category
-            post.description = markdown_to_safe_html(content['body'])
+                # if valid on update, use new values, otherwise assume old values remain
+                # this check is applied so dtube posts, edited in steemit are still retained
+                if new_type and new_video_id and new_category:
+                    post.video_type, post.video_id, post.category = new_type, new_video_id, new_category
+                post.description = markdown_to_safe_html(content['body'])
 
-            # update experimental votes information
-            log('Starting vote add...')
-            post.votes_sparkline_data = get_sparkline_data_from_content(content)
-            log(str(post.votes_sparkline_data))
-            post.voters_list = ' '.join(get_voters_list_from_content(content))
-            log(post.voters_list)
-            log('Done vote add!')
-
-            post.pending_steem_info_update = False
-            post.steem_info_update_requested = None
-            db.session.commit()
-            return post
-        except Exception as e:
-            log('Problem updating Steem info for: @' + post.author + '/' + post.permlink + '!')
-            log(str(e))
-            db.session.delete(post)
-            db.session.commit()
-            log('Assumed Invalid, and Deleted post!') # todo - decide whether there's a better approach to this
+                return post
+            except Exception as ex:
+                log(f'Problem updating Steem info for: @{post.author }/{post.permlink }!')
+                log(f"{ex}\n {traceback.format_exc()}")
+                return "delete"
 
     # query youtube/dtube/vimeo for up to date content, and add to post
     def update_video_info(self, post):
+
         try:
             if post.video_type == 'youtube':
                 video_id = post.video_id
@@ -113,14 +108,13 @@ class PostUpdateThread(Thread):
                 url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails&id={video_id}&key={video_api_key}'
                 try:
                     js = requests.get(url).json()
-                except Exception as e:
+                except Exception as ex:
                     log(url)
                     log('Problem accessing YouTube Video info for: @' + post.author + '/' + post.permlink + '!')
-                    time.sleep(5)
-                    return
-                items = js['items']
-                if len(items) == 1:
-                    item = items[0]
+                    return "delete"
+
+                if "items" in js and len(js["items"]) == 1:
+                    item = js["items"][0]
                     post.video_thumbnail_image_url = item['snippet']['thumbnails']['medium']['url']
                     post.video_duration_seconds = seconds_from_youtube_duration(item['contentDetails']['duration'])
                     post.video_provider_channel_id = item['snippet']['channelId']
@@ -137,10 +131,9 @@ class PostUpdateThread(Thread):
                     url = 'https://steemit.com/dtube/@' + post.author + '/' + post.permlink + '.json'
                     try:
                         js = requests.get(url).json()['post']
-                    except Exception as e:
+                    except Exception as ex:
                         log(url)
                         log('Problem accessing DTube Video info for: @' + post.author + '/' + post.permlink + '!')
-                        time.sleep(5)
                         return
                     metadata = js.get('json_metadata', '[]')
                     post.video_thumbnail_image_url = 'https://ipfs.io/ipfs/' + metadata['video']['info']['snaphash']
@@ -149,13 +142,11 @@ class PostUpdateThread(Thread):
                     post.video_post_publish_delay_seconds = 0
                     # todo - decide which metadata to store in DB
                     # post.video_info = metadata
-                except Exception as e:
+                except Exception as ex:
                     # todo - fix regex so invalid dtubes don't reach here, then remove
-                    log('Problem updating updating dtube video info: ' + str(e))
-                    db.session.delete(post)
-                    db.session.commit()
+                    log('Problem updating updating dtube video info: ' + f"{ex}\n{traceback.format_exc()}")
                     log('Assumed Invalid, and Deleted post! : @' + post.author + '/' + post.permlink)
-                    return
+                    return "delete"
 
             elif post.video_type == 'dlive':
                 try:
@@ -165,8 +156,7 @@ class PostUpdateThread(Thread):
                     except Exception as e:
                         log(url)
                         log('Problem accessing DLive Video info for: @' + post.author + '/' + post.permlink + '!')
-                        time.sleep(5)
-                        return
+                        return "delete"
                     metadata = js.get('json_metadata', '[]')
                     post.video_thumbnail_image_url = metadata.get('thumbnail', '')
                     post.video_duration_seconds = -1
@@ -174,27 +164,21 @@ class PostUpdateThread(Thread):
                     post.video_post_publish_delay_seconds = 0
                     # todo - decide which metadata to store in DB
                     # post.video_info = metadata
-                except Exception as e:
+                except Exception as ex:
                     # todo - fix intake filter regex so invalid dlives don't reach here, then remove
-                    log('Problem updating updating dlive video info: ' + str(e))
-                    db.session.delete(post)
-                    db.session.commit()
+                    log('Problem updating updating dlive video info: ' + f"{ex}\n{traceback.format_exc()}")
                     log('Assumed Invalid, and Deleted post! : @' + post.author + '/' + post.permlink)
-                    return
+                    return "delete"
 
             # todo - implement support
             elif post.video_type == 'vimeo':
                 pass
 
-            post.pending_video_info_update = False
-            post.video_info_update_requested = None
-            db.session.commit()
-        except Exception as e:
+        except Exception as ex:
             log('Updating video info failed for: @' + post.author + '@' + post.permlink + '!')
-            log(str(e))
-            db.session.delete(post)
-            db.session.commit()
-            log('Assumed Invalid, and Deleted post!')
+            log(f"{ex}\n{traceback.format_exc()}")
+            return "delete"
+
         return post
 
     # query thread to update posts with pending update, and perform them
@@ -202,8 +186,6 @@ class PostUpdateThread(Thread):
     def run(self):
         last_updated_post_scores = datetime.now() - timedelta(seconds=240)
         while True:
-            time.sleep(0.5)
-
             # update post scores every 5 minutes
             if (datetime.now() - last_updated_post_scores).seconds > 300:
                 log('Updating post scores...')
@@ -211,34 +193,39 @@ class PostUpdateThread(Thread):
                 last_updated_post_scores = datetime.now()
                 log('Updated post scores!')
 
-            post = db.session.query(
-                Post
-            ).filter(
-                Post.pending_video_info_update
-            ).order_by(
-                Post.video_info_update_requested
-            ).first()
-
-            if post:
-                post = self.update_steem_info(post)
-                if post:
-                    post = self.update_video_info(post)
-            else:
+            with DBConnection() as db:
                 post = db.session.query(
                     Post
                 ).filter(
-                    Post.pending_steem_info_update
+                    Post.pending_video_info_update
                 ).order_by(
-                    Post.steem_info_update_requested
+                    Post.video_info_update_requested
                 ).first()
 
                 if post:
-                    post = self.update_steem_info(post)
-                else:
-                    time.sleep(1)
+                    new_post = self.update_steem_info(post)
+
+                    if new_post == "delete":
+                        db.session.delete(post)
+                        db.session.commit()
+                        return
+
+                    post = new_post
+                    post.pending_steem_info_update = False
+
+                    new_post = self.update_video_info(post)
+
+                    if new_post == "delete":
+                        db.session.delete(post)
+                        db.session.commit()
+                        return
+
+                    post = new_post
+
+                    post.pending_video_info_update = False
+                    db.session.commit()
 
 
-time.sleep(10)
 log('Started Post Info Updater')
 
 # start thread for updating post info

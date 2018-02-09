@@ -14,6 +14,14 @@ def create_tsvector(*args):
     return func.to_tsvector('english', exp)
 
 
+class LastBlock(db.Model):
+    __tablename__ = "last_block"
+    number = db.Column(db.Integer, primary_key=True)
+
+    def __init__(self, number):
+        self.number = number
+
+
 class SteemAccount(db.Model):
     __tablename__ = "steem_accounts"
     author = db.Column(db.String, primary_key=True)

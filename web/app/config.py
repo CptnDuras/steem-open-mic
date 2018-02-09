@@ -20,10 +20,10 @@ if "FLASK_SECRET_KEY" not in os.environ:
     os.environ['FLASK_SECRET_KEY'] = "Magical mystery tour"
 
 if "POSTGRES_USER" not in os.environ:
-    os.environ['POSTGRES_USER'] = "postgres_user"
-    os.environ['POSTGRES_HOST'] = "postgres"
-    os.environ['POSTGRES_PASS'] = "postgres_pass"
-    os.environ['POSTGRES_DB'] = "steem"
+    os.environ['POSTGRES_USER'] = "steem"
+    os.environ['POSTGRES_HOST'] = "localhost"
+    os.environ['POSTGRES_PASS'] = "steem"
+    os.environ['POSTGRES_DB'] = "openmic"
 
 # grab the folder of the top-level directory of this project
 BASEDIR = os.path.abspath(os.path.dirname(__file__))

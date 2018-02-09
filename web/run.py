@@ -1,4 +1,4 @@
-# run.py
+#! /usr/bin/env python
 
 from web.app import app
 
