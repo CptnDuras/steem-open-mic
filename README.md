@@ -1,28 +1,27 @@
-# Steem Video Aggregator
+# Steem Open Mic system
+## Project
+So far this is based on mutli-tube, the excellent platform built by andybets https://github.com/andybets/steem-video-aggregator
+
+## Vision
+The plan is to be able to list all of the videos from openmic, as well as provide an interface for users to upload their videos as well.
+
+A more detailed technical goal list:
+* List all videos on steemit with the tag openmic
+* Provide upload of videos/linking to videos with the default tag of openmic
+* Group openmic tags based on the current week (i.e. Open Mic week 71 )
+* Ability to group by most viewed, highest grossing, newest, most active (most comments/etc.)
+* Look good
+* deploy on 
 
 ## How to Run (for development)
 
-1. Install docker and docker-compose
+Prerequisites:
+* Python3.6
+* PostgreSQL database
 
-2. Create the credentials.env file like the template, and replace credentials/settings with those your require
-
-3. Update docker-compose.yml to provide a volume for the database
-
-4. Build and run the Docker containers
-
-- % docker-compose build
-- % docker-compose build
-- % docker-compose up -d
-
-5. Browse to http://localhost:81
-
-
-## To Use with SSL (or on non-localhost domain)
-
-1. Use LetsEncrypt and Certbot to add fullchain.pem and privkey.pem files to project root directory
-
-2. Edit mysettings-ssl.conf to uncomment certificate lines and change server_name to your domain
-
+1. Create/activate a python3 virtual environment
+2. Run pip install -r requirements.txt
+3.
 
 ## Database Schema Migrations
 Execute from within running web container...

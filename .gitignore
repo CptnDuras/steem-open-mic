@@ -26,3 +26,6 @@ monitor-log.txt
 
 # node modules generated in docker build process
 /node-vue-cli/node_modules/
+
+# virtualenv
+venv
