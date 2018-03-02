@@ -28,7 +28,7 @@ Mako
 Markdown
 MarkupSafe
 nose2
-psycopg2
+psycopg2>=2.7,<2.8 --no-binary psycopg2
 pycparser
 Pygments
 PySocks

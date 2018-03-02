@@ -33,7 +33,7 @@ def trending_videos(limit="30"):
     df = pd.read_sql(query.statement, db.session.bind)
     df = create_video_summary_fields(df, filter_data)
     df = df.head(limit)
-    return df.to_json(orient='records')
+    return jsonify(df.to_json(orient='records'))
 
 
 @public_blueprint.route('/f/api/hot-videos/<limit>', methods=['GET', 'POST'])
@@ -49,10 +49,12 @@ def hot_videos(limit="30"):
         query = apply_filter_to_query(query, filter_data)
     # get more records than needed as post query filters may remove some
     query = query.order_by(Post.hot_score.desc()).limit(int(limit * 1.2))
+
     df = pd.read_sql(query.statement, db.session.bind)
     df = create_video_summary_fields(df, filter_data)
     df = df.head(limit)
-    return df.to_json(orient='records')
+
+    return jsonify(df.to_json(orient='records'))
 
 
 @public_blueprint.route('/f/api/new-videos/<limit>', methods=['GET', 'POST'])
@@ -65,17 +67,25 @@ def new_videos(limit="30"):
     try:
         query = db.session.query(Post)
         if request.method == 'POST':
-            data = request.data
-            filter_data = json.loads(data)
+            filter_data = json.loads(request.data)
             query = apply_filter_to_query(query, filter_data)
+
         # get more records than needed as post query filters may remove some
-        query = query.order_by(Post.created.desc()).limit(int(limit * 1.2))
-        df = pd.read_sql(query.statement, db.session.bind)
-        df = create_video_summary_fields(df, filter_data)
-        df = df.head(limit)
-        return df.to_json(orient='records')
+        query = query.order_by(
+            Post.created.desc()
+        ).limit(
+            int(limit * 1.2)
+        )
+
+        # we'll pass our SQL statement to pandas to get a data_frame
+        data_frame = pd.read_sql(query.statement, db.session.bind)
+        summary = create_video_summary_fields(data_frame, filter_data)
+        # this is bad, converting json, back to a dict, back to json
+        output = json.loads(summary.head(limit).to_json(orient='records'))
+
+        return jsonify(output)
     except Exception as e:
-        return str(e)
+        return jsonify(str(e))
 
 
 @public_blueprint.route('/f/api/search/<search_terms>/<limit>', methods=['GET', 'POST'])

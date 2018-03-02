@@ -19,10 +19,12 @@ youtube_video_regex = re.compile(youtube_video_regex)
 
 
 def log(s):
-    with open('monitor-log.txt', 'a') as f:
-        f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ', ')
-        f.write(str(s) + '\n')
+    output = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, {s}\n"
 
+    with open('monitor-log.txt', 'a') as file:
+        file.write(output)
+
+    print(output)
 
 def get_payout_string(payout):
     return "${:.2f}".format(payout)

@@ -66,15 +66,21 @@ def add_block_content_to_db(block):
 
                 # check for existing post (or add skeleton record if not present) and schedule updates
 
-                if operation_type == 'comment':
+                if operation_type == 'comment' and o[1]["json_metadata"] != "false":
                     try:
                         try:
-                            metadata = json.loads(item["json_metadata"])
-                        except Exception as ex:
-                            return
+                            metadata = json.loads(json.loads(item["json_metadata"]))
+                        except Exception as ex1:
+                            try:
+                                metadata = json.loads(item["json_metadata"])
+                            except Exception as ex2:
+                                return
 
-                        if "tags" not in metadata or "openmic" not in metadata["tags"] or item['parent_author'] != '':
-                            return
+                        try:
+                            if "tags" not in metadata or "openmic" not in metadata["tags"] or item['parent_author'] != '':
+                                return
+                        except Exception as ex:
+                            log(f"{ex} {traceback.format_exc()}")
 
                         log(f"Found openmic @ {block_number}")
 
@@ -88,7 +94,7 @@ def add_block_content_to_db(block):
                                 )
                             ).first()
 
-                            if not post:
+                            if post:
                                 post.pending_steem_info_update = True
                                 post.steem_info_update_requested = datetime.now()
                                 post.pending_video_info_update = True
@@ -150,7 +156,7 @@ class StreamingBlockSyncThread(Thread):
                 for blockcount, block in enumerate(b.stream_from(start_block=self.start_block, full_blocks=True)):
                     block_number = self.start_block + blockcount
 
-                    if (self.start_block + blockcount) % 10 == 0:
+                    if (self.start_block + blockcount) % 100 == 0:
                         # save our progress to the DB
                         with DBConnection() as db:
                             last_block = db.session.query(LastBlock).first()
@@ -193,7 +199,7 @@ else:
 # populate_db_from_raw_blocks_json_files('/home/app/raw_blocks/', datetime(2017, 6, 1))
 
 hours_to_collect = 4
-min_start_block_number = steem.head_block_number - int((3600 / 3 * hours_to_collect))
+min_start_block_number = steem.head_block_number - int((3600 / 1 * hours_to_collect))
 
 # start thread for collecting raw blocks info
 log('Populating DB from Steem Stream...')
