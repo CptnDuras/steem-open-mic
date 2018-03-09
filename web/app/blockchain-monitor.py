@@ -1,5 +1,4 @@
 import json
-import time
 import traceback
 from datetime import datetime
 from threading import Thread
@@ -10,7 +9,7 @@ from sqlalchemy import and_
 from steem import Steem
 from steem.blockchain import Blockchain
 
-from web.app.models import LastBlock
+from models import LastBlock
 
 steem = Steem(nodes=app.config['STEEM_NODES'])
 

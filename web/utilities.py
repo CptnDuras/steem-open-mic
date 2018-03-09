@@ -7,11 +7,11 @@ import bleach
 import markdown
 import pandas as pd
 import re
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, not_
 from sqlalchemy.orm import sessionmaker
 
-from web.app.config import SQLALCHEMY_DATABASE_URI
-from web.app.models import *
+from config import SQLALCHEMY_DATABASE_URI
+from models import *
 
 # compile regex for checking for youtube videos
 youtube_video_regex = '((\n.{0,3})|(src\s?=\s?.{1}))((http(s)?://youtu.be/)|(http(s)?://www.youtube.com/embed/)|(http(s)?://www.youtube.com/)|(http(s)?://m.youtube.com/))(watch\?v=)?(?P<videoid>(\w|\_|\-)+)'
@@ -26,8 +26,13 @@ def log(s):
 
     print(output)
 
-def get_payout_string(payout):
-    return "${:.2f}".format(payout)
+
+def get_payout_string(*args):
+    total = 0.0
+    for arg in args:
+        total += float(arg)
+
+    return "${:.2f}".format(total)
 
 
 # todo - add weeks, months and years

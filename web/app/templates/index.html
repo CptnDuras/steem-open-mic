@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{$ title $}</title>
+</head>
+<body>
+<script src="https://unpkg.com/vue"></script>
+
+<div id="app">
+  <p>{{ message }}</p>
+</div>
+<script>
+  let message = "This is a message in a variable";
+  new Vue({
+    el: '#app',
+    data: {
+      message: message
+    }
+  })
+</script>
+
+</body>
+</html>

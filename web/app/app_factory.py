@@ -7,8 +7,8 @@ from flask_pagedown import PageDown
 from flask_uploads import UploadSet, IMAGES, configure_uploads
 from steem import Steem
 
-from web.app.views import public_blueprint
-from web.app.models import db
+from web.app.views import public_blueprint, api_blueprint
+from models import db
 
 bcrypt = Bcrypt()
 mail = Mail()
@@ -18,8 +18,20 @@ auth_token = HTTPBasicAuth()
 login_manager = LoginManager()
 
 
+class CustomFlask(Flask):
+    jinja_options = Flask.jinja_options.copy()
+    jinja_options.update({
+        "block_start_string": '{&',
+        "block_end_string": '&}',
+        "variable_start_string": '{$',
+        "variable_end_string": '$}',
+        "comment_start_string": '{##',
+        "comment_end_string": '##}',
+    })
+
+
 def create_app(config):
-    app = Flask(__name__)
+    app = CustomFlask(__name__)
     app.config.from_pyfile(config)
 
     with app.app_context():
@@ -37,6 +49,7 @@ def create_app(config):
         steem = Steem(nodes=app.config['STEEM_NODES'])
 
         app.register_blueprint(public_blueprint)
+        app.register_blueprint(api_blueprint)
 
     return app, db, steem
 

@@ -1,4 +1,3 @@
-import time
 import json
 import traceback
 
@@ -12,9 +11,8 @@ from sqlalchemy import text
 from webapp import app, db, steem
 from models import Post
 from utilities import log,  seconds_from_youtube_duration, get_valid_video, markdown_to_safe_html
-from utilities import get_sparkline_data_from_content, get_voters_list_from_content
 
-from web.app.utilities import DBConnection
+from utilities import DBConnection
 
 
 class PostUpdateThread(Thread):

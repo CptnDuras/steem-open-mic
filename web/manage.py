@@ -4,7 +4,7 @@ from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager, Server
 
 from web.app import app
-from web.app.models import db
+from models import db
 
 manager = Manager(app)
 migrate = Migrate(app, db)

@@ -1,3 +1,3 @@
-from web.app.factory import create_app
+from web.app.app_factory import create_app
 
-app, db, steem = create_app("config.py")
+app, db, steem = create_app("../config.py")
