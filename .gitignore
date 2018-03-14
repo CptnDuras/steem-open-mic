@@ -29,3 +29,8 @@ monitor-log.txt
 
 # virtualenv
 venv
+
+# stuff created by compiling js/css
+web/app/static/js
+web/app/static/css
+web/app/static/.webassets-cache
