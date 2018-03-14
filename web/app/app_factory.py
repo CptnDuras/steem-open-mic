@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_assets import Environment
 from flask_bcrypt import Bcrypt
 from flask_httpauth import HTTPBasicAuth
 from flask_login import LoginManager
@@ -7,6 +8,7 @@ from flask_pagedown import PageDown
 from flask_uploads import UploadSet, IMAGES, configure_uploads
 from steem import Steem
 
+from bundles import register_assets
 from web.app.views import public_blueprint, api_blueprint
 from models import db
 
@@ -37,10 +39,15 @@ def create_app(config):
     with app.app_context():
         db.init_app(app)
         db.create_all()
+
         bcrypt.init_app(app)
         pagedown.init_app(app)
+
         login_manager.init_app(app)
         login_manager.login_view = "users.login"
+
+        assets = Environment(app)
+        register_assets(assets)
 
         # Configure the image uploading via Flask-Uploads
         images = UploadSet('images', IMAGES)

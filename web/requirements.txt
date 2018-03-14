@@ -16,6 +16,7 @@ Flask-Migrate
 Flask-PageDown
 Flask-Script
 Flask-SQLAlchemy
+Flask-Assets
 Flask-Uploads
 Flask-WTF
 freeze

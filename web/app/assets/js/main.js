@@ -42,8 +42,8 @@ Vue.component('replies-panel', RepliesPanel);
 export const bus = new Vue();
 
 // steemconnect v2 libraries
-require('../js/sc2.min.js');
-require('../js/steem.min.js');
+require('./js/sc2.min.js');
+require('./js/steem.min.js');
 
 // directive to trigger actions primarily if clicking outside header bar
 Vue.directive('click-outside', {
