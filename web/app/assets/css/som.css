@@ -1,0 +1,56 @@
+/* Define our theme colors */
+:root {
+    --color-1-lt: #4f5b62;
+    --color-1-md: #263238;
+    --color-1-dk: #000a12;
+
+    --color-2-lt: #4f83cc;
+    --color-2-md: #01579b;
+    --color-2-dk: #002f6c;
+
+
+    --color-3-lt: #63a4ff;
+    --color-3-md: #1976d2;
+    --color-3-dk: #004ba0;
+
+
+    --color-grey-dark: #2c3b41;
+
+}
+
+h1, h2 {
+  font-weight: normal;
+}
+
+h2 {
+  margin:0px;
+}
+
+h4 {
+  font-size: 1.1rem!important;
+}
+@media (min-width: 576px) {
+  h4 {
+    font-size: 1.4rem!important;
+  }
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  display: inline-block;
+  margin: 0 10px;
+}
+
+a {
+  color: #42b983;
+}
+
+.som-thumbnail {
+    cursor:pointer;
+    z-index:998;
+    background-color:rgb(0,0,0);
+}

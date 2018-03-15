@@ -3,7 +3,7 @@ from flask_assets import Environment
 from flask_bcrypt import Bcrypt
 from flask_httpauth import HTTPBasicAuth
 from flask_login import LoginManager
-from flask_mail import Mail
+# from flask_mail import Mail
 from flask_pagedown import PageDown
 from flask_uploads import UploadSet, IMAGES, configure_uploads
 from steem import Steem
@@ -13,7 +13,7 @@ from web.app.views import public_blueprint, api_blueprint
 from models import db
 
 bcrypt = Bcrypt()
-mail = Mail()
+# mail = Mail()
 pagedown = PageDown()
 auth = HTTPBasicAuth()
 auth_token = HTTPBasicAuth()

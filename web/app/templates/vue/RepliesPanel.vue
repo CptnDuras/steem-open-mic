@@ -1,4 +1,4 @@
-<template>
+<template id="replies">
   <div>
     <div class="action-link" @click="fetchData" v-show="!loaded">Show Replies</div>
     <div v-show="loaded">
@@ -37,36 +37,3 @@
     </div>
   </div>
 </template>
-
-<script>
-  import { bus } from './main.js'
-  export default {
-    name: 'repliespanel',
-    props: ['author', 'permlink', 'reply_count'],
-    methods: {
-      fetchData: function() {
-        this.$http.get('/f/api/replies/@' + this.author + '/' + this.permlink)
-         .then(response => {
-            this.replies = response.data;
-            this.loaded = true;
-        });
-      }
-    },
-    data () {
-      return {
-        loaded: false,
-        replies: []
-    }
-  }
-}
-
-</script>
-
-<style scoped>
-  .repliespanel {
-    padding: 0em;
-    padding-top: 0.7em;
-    padding-bottom: 0.05em;
-    border: none;
-  }
-</style>

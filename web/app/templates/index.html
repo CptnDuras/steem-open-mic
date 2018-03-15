@@ -3,15 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <title>{$ title $}</title>
-  {& assets "steem_js" &}
+  {## {& assets "steem_js" &}
   <script src="{$ ASSET_URL $}"></script>
-  {& endassets &}
+  {& endassets &} ##}
   <script src="https://unpkg.com/vue"></script>
+  {& block main_css &}
+  {& assets "bulma" &}
+  <link rel="stylesheet" type="text/css" href="{$ ASSET_URL $}">
+  {& endassets &}
+
+  {& assets "som_css" &}
+  <link rel="stylesheet" type="text/css" href="{$ ASSET_URL $}">
+  {& endassets &}
+
+
+  {& endblock &}
+  <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
 </head>
 <body>
-<div id="app"></div>
+{& include "vue/home.vue" &}
+<nav class="navbar is-white topNav">
+  <div class="container">
+    <div class="navbar-brand">
+      <i class="navbar-item fa fa-video-camera"></i>
+      <span class="navbar-burger burger" data-target="navbarMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </div>
+    <div class="navbar-menu">
+    <div class="container">
+      <div class="navbar-end">
+        <div class="tabs is-right">
+          <ul>
+            <li>
+              <a class="" href="#">
+                <i class="fa fa-cogs"></i>
+            </a>
+            </li>
+            <li>
+              <a class="" href="#">
+                <i class="fa fa-filter"></i>
+              </a>
+            </li>
+            <li>
+              <a class="" href="#">
+                <i class="fa fa-search"></i>
+              </a>
+            </li>
+
+            <li>
+              <a class="button is-outlined">
+                Login
+              </a>
+            </li>
+            <!--<li>-->
+              <!--<img src="https://steemitimages.com/u/cptnduras/avatar/small" class="profile"/>-->
+            <!--</li>-->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+</nav>
+
+
+<div id="app">
+  <home/>
+</div>
 {& assets "main_js" &}
 <script src="{$ ASSET_URL $}"></script>
 {& endassets &}
+
 </body>
 </html>

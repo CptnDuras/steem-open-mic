@@ -44,7 +44,7 @@ tkreadonly
 twilio
 Werkzeug
 WTForms
-
+cssmin
 numpy
 scipy
 scikit-learn

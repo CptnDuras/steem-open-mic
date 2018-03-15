@@ -5,16 +5,26 @@ babel = get_filter('babel', presets='vue')
 
 assets = {
     "main_js": Bundle(
+        '../assets/js/home.js',
         '../assets/js/main.js',
         filters=babel,
         output="js/main.js"
     ),
-    # "steem_js": Bundle(
-    #     '../assets/js/sc2.min.js',
-    #     '../assets/js/steem.min.js',
-    #     filters=babel,
-    #     output="js/steem.js"
-    # ),
+    "som_css": Bundle(
+        "../assets/css/som.css",
+        filters="cssmin",
+        output="css/som.css"
+    ),
+    "fontawesome": Bundle(
+        "../assets/yarn/font-awesome/css/font-awesome.css",
+        filters="cssmin",
+        output="css/fa.css"
+    ),
+    "bulma": Bundle(
+        "../assets/yarn/bulma/css/bulma.css",
+        filters="cssmin",
+        output="css/bulma.css"
+    ),
 }
 
 
