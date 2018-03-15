@@ -20,10 +20,20 @@ assets = {
         filters="cssmin",
         output="css/fa.css"
     ),
-    "bulma": Bundle(
-        "../assets/yarn/bulma/css/bulma.css",
+    "bootstrap_css": Bundle(
+        "../assets/yarn/bootstrap/dist/css/bootstrap.css",
         filters="cssmin",
-        output="css/bulma.css"
+        output="css/bootstrap.css"
+    ),
+    "bootstrap_js": Bundle(
+        "../assets/yarn/bootstrap/dist/js/bootstrap.js",
+        filters="jsmin",
+        output="js/bootstrap.js"
+    ),
+    "jquery": Bundle(
+        "../assets/yarn/jquery/dist/jquery.js",
+        filters="jsmin",
+        output="js/jquery.js"
     ),
 }
 

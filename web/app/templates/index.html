@@ -8,11 +8,13 @@
   {& endassets &} ##}
   <script src="https://unpkg.com/vue"></script>
   {& block main_css &}
-  {& assets "bulma" &}
+
+  {& assets "som_css" &}
   <link rel="stylesheet" type="text/css" href="{$ ASSET_URL $}">
   {& endassets &}
 
-  {& assets "som_css" &}
+
+  {& assets "bootstrap_css" &}
   <link rel="stylesheet" type="text/css" href="{$ ASSET_URL $}">
   {& endassets &}
 
@@ -22,61 +24,61 @@
 </head>
 <body>
 {& include "vue/home.vue" &}
-<nav class="navbar is-white topNav">
-  <div class="container">
-    <div class="navbar-brand">
-      <i class="navbar-item fa fa-video-camera"></i>
-      <span class="navbar-burger burger" data-target="navbarMenu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </span>
-    </div>
-    <div class="navbar-menu">
-    <div class="container">
-      <div class="navbar-end">
-        <div class="tabs is-right">
-          <ul>
-            <li>
-              <a class="" href="#">
-                <i class="fa fa-cogs"></i>
-            </a>
-            </li>
-            <li>
-              <a class="" href="#">
-                <i class="fa fa-filter"></i>
-              </a>
-            </li>
-            <li>
-              <a class="" href="#">
-                <i class="fa fa-search"></i>
-              </a>
-            </li>
 
-            <li>
-              <a class="button is-outlined">
-                Login
-              </a>
-            </li>
-            <!--<li>-->
-              <!--<img src="https://steemitimages.com/u/cptnduras/avatar/small" class="profile"/>-->
-            <!--</li>-->
-          </ul>
-        </div>
+<div class="main-navigation">
+	<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+	  <div class="container">
+	    <!-- Brand -->
+        <a class="navbar-brand" href="#">Steem Open Mic</a>
+	    <!-- Hamburgler -->
+	    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+	    <!-- Actual nav items -->
+      <div class="collapse navbar-collapse" id="main-nav">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link disabled" href="#">Disabled</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+            <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+              <a class="dropdown-item" href="#">Action</a>
+              <a class="dropdown-item" href="#">Another action</a>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          </li>
+        </ul>
+        <form class="form-inline my-2 my-md-0">
+          <input class="form-control" placeholder="Search" type="text">
+        </form>
       </div>
-    </div>
-  </div>
-  </div>
 
-</nav>
+	  </div>
+	</nav>
+	<!-- end top navigation -->
+</div>
 
 
 <div id="app">
   <home/>
 </div>
+{& block main_js &}
+{& assets "jquery" &}
+<script src="{$ ASSET_URL $}"></script>
+{& endassets &}
 {& assets "main_js" &}
 <script src="{$ ASSET_URL $}"></script>
 {& endassets &}
-
+{& assets "bootstrap_js" &}
+<script src="{$ ASSET_URL $}"></script>
+{& endassets &}
+{& endblock &}
 </body>
 </html>

@@ -51,3 +51,4 @@ scikit-learn
 matplotlib
 pandas
 beautifulsoup4
+jsmin
