@@ -15,50 +15,47 @@ from utilities import apply_filter_to_query, create_video_summary_fields, apply_
 api_blueprint = Blueprint("api", __name__)
 
 
-@api_blueprint.route('/api/trending-videos/<limit>', methods=['GET', 'POST'])
-@api_blueprint.route('/api/trending-videos', methods=['GET', 'POST'])
+@api_blueprint.route('/api/trending/videos/<limit>', methods=['GET'])
+@api_blueprint.route('/api/trending/videos', methods=['GET'])
 def trending_videos(limit="30"):
     from web.app import db
 
     limit = int(limit)
     filter_data = {}
     query = db.session.query(Post)
-    if request.method == 'POST':
-        data = request.data
-        filter_data = json.loads(data)
-        query = apply_filter_to_query(query, filter_data)
     # get more records than needed as post query filters may remove some
     query = query.order_by(Post.trending_score.desc()).limit(int(limit * 1.2))
-    df = pd.read_sql(query.statement, db.session.bind)
-    df = create_video_summary_fields(df, filter_data)
-    df = df.head(limit)
-    return jsonify(df.to_json(orient='records'))
+
+    data_frame = pd.read_sql(query.statement, db.session.bind)
+    summary = create_video_summary_fields(data_frame, filter_data)
+    output = json.loads(summary.head(limit).to_json(orient='records'))
+
+    return jsonify(output)
 
 
-@api_blueprint.route('/api/hot-videos/<limit>', methods=['GET', 'POST'])
-@api_blueprint.route('/api/hot-videos', methods=['GET', 'POST'])
+@api_blueprint.route('/api/hot/videos/<limit>', methods=['GET'])
+@api_blueprint.route('/api/hot/videos', methods=['GET'])
 def hot_videos(limit="30"):
     from web.app import db
     limit = int(limit)
     filter_data = {}
     query = db.session.query(Post)
 
-    if request.method == 'POST':
-        data = request.data
-        filter_data = json.loads(data)
-        query = apply_filter_to_query(query, filter_data)
-    # get more records than needed as post query filters may remove some
-    query = query.order_by(Post.hot_score.desc()).limit(int(limit * 1.2))
+    try:
+        # get more records than needed as post query filters may remove some
+        query = query.order_by(Post.hot_score.desc()).limit(int(limit * 1.2))
 
-    df = pd.read_sql(query.statement, db.session.bind)
-    df = create_video_summary_fields(df, filter_data)
-    df = df.head(limit)
+        data_frame = pd.read_sql(query.statement, db.session.bind)
+        summary = create_video_summary_fields(data_frame, filter_data)
+        output = json.loads(summary.head(limit).to_json(orient='records'))
 
-    return jsonify(df.to_json(orient='records'))
+        return jsonify(output)
+    except Exception as e:
+        return jsonify(str(e))
 
 
-@api_blueprint.route('/api/new-videos/<limit>', methods=['GET', 'POST'])
-@api_blueprint.route('/api/new-videos', methods=['GET', 'POST'])
+@api_blueprint.route('/api/new/videos/<limit>', methods=['GET'])
+@api_blueprint.route('/api/new/videos', methods=['GET'])
 def new_videos(limit="30"):
     from web.app import db
 
@@ -66,9 +63,6 @@ def new_videos(limit="30"):
     filter_data = {}
     try:
         query = db.session.query(Post)
-        if request.method == 'POST':
-            filter_data = json.loads(request.data)
-            query = apply_filter_to_query(query, filter_data)
 
         # get more records than needed as post query filters may remove some
         query = query.order_by(
@@ -196,7 +190,6 @@ def replies(author=None, permlink=None):
     return jsonify(comments)
 
 
-# todo - implement for when users click on payout, to show breakdown from db
 @api_blueprint.route('/api/votes/@<author>/<permlink>')
 def votes(author=None, permlink=None):
     return jsonify([])

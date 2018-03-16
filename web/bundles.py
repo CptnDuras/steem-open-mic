@@ -5,7 +5,6 @@ babel = get_filter('babel', presets='vue')
 
 assets = {
     "main_js": Bundle(
-        '../assets/yarn/vue-carousel/dist/vue-carousel.min.js',
         '../assets/js/home.js',
         '../assets/js/main.js',
         filters=babel,

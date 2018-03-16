@@ -22,9 +22,7 @@
   <link rel="stylesheet" type="text/css" href="{$ ASSET_URL $}">
   {& endassets &}
 
-
   {& endblock &}
-  <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
 </head>
 <body>
 {& include "vue/home.vue" &}
@@ -74,6 +72,7 @@
   <home/>
 </div>
 {& block main_js &}
+<script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
 
 {& assets "jquery" &}
 <script src="{$ ASSET_URL $}"></script>

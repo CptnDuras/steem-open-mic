@@ -56,57 +56,49 @@ var home = Vue.component("home", {
         },
         getVideos(){
             // Go and get the videos from the API
-            var test_videos = [{
-                title: "Awesome video 1!",
-                source: "https://youtu.be/2Sv9DfZO0ow",
-                img: "https://www.fillmurray.com/300/300",
-                description: "1 This is a really awesome video you should watch",
-                duration: "03:15"
-            },{
-                title: "Awesome video 2!",
-                source: "https://youtu.be/2Sv9DfZO0ow",
-                img: "https://www.fillmurray.com/300/300",
-                description: "2 This is a really awesome video you should watch",
-                duration: "03:15"
-            },{
-                title: "Awesome video 3!",
-                source: "https://youtu.be/2Sv9DfZO0ow",
-                img: "https://www.fillmurray.com/300/300",
-                description: "3 This is a really awesome video you should watch",
-                duration: "03:15"
-            },{
-                title: "Awesome video 4!",
-                source: "https://youtu.be/2Sv9DfZO0ow",
-                img: "https://www.fillmurray.com/300/300",
-                description: "4 This is a really awesome video you should watch",
-                duration: "03:15"
-            },{
-                title: "Awesome video 5!",
-                source: "https://youtu.be/2Sv9DfZO0ow",
-                img: "https://www.fillmurray.com/300/300",
-                description: "5 This is a really awesome video you should watch",
-                duration: "03:15"
-            },{
-                title: "Awesome video 6!",
-                source: "https://www.fillmurray.com/300/300",
-                img: "http://i.ytimg.com/vi/ZKOtE9DOwGE/mqdefault.jpg",
-                description: "6 This is a really awesome video you should watch",
-                duration: "03:15"
-            }];
             var self = this;
 
-            test_videos.forEach(function (video) {
-                self.addSlide(video);
+            $.ajax({
+                url: "/api/hot/videos",
+                method: "GET",
+
+            }).done(function(data){
+                console.log(data);
+                data.forEach(function (video) {
+                    self.addSlide(video);
+                });
             });
         },
         addSlide(video){
+            var img = "";
+            var url = "";
+
+            if(video.video_type == "dtube"){
+                url = 'https://d.tube/#!/v/' + video.author + '/' + video.permlink;
+                img = "/static/img/dtube-icon.png";
+            }else if(video.video_type == "dlive"){
+                img = "/static/img/dlive-icon.png";
+
+                if(video.video_id == 'live') {
+                    url = 'https://www.dlive.io/#/livestream/' + video.author + '/' + video.permlink;
+                }else{
+                    url = 'https://www.dlive.io/#/video/' + video.author + '/' + video.permlink;
+                }
+            }else if(video.video_type == "youtube"){
+                url = 'https://www.youtube.com/watch?v=' + video.video_id;
+                img = "https://img.youtube.com/vi/" + video.video_id + "/0.jpg";
+            }
+
+            var upload_time = new Date(video.created * 1000);
+
             var video_tile = '' +
                 '<a href="#" title="' + video.title + '">\n' +
-                '    <img data-lazy="' + video.img + '" alt="' + video.title + '" class="img-responsive" height="130px" />\n' +
-                '    <h2>' + video.description + '</h2>\n' +
+                '    <img data-lazy="' + img + '" alt="' + video.title + '" class="img-responsive" height="130px" />\n' +
+                '    <h4>' + video.title_truncated + '...</h4>\n' +
                 '    <span class="glyphicon glyphicon-play-circle"></span>\n' +
-                '    <span class="duration">' + video.duration + '</span>\n' +
+                '    <span class="upload">' + upload_time + '</span>\n' +
                 '</a>';
+
             this.carousels.slick(
                 'slickAdd',
                 video_tile
@@ -115,13 +107,3 @@ var home = Vue.component("home", {
     }
 
 });
-
-/*
-* this is what i want the template to look like
-<a href="#" title="' + video.title + '">
-    <img data-lazy="' + video.img + '" alt="' + video.title + '" class="img-responsive" height="130px" />
-    <h2>' + video.description + '</h2>
-    <span class="glyphicon glyphicon-play-circle"></span>
-    <span class="duration">' + video.duration + '</span>
-</a>
-* */
