@@ -18,6 +18,10 @@
   <link rel="stylesheet" type="text/css" href="{$ ASSET_URL $}">
   {& endassets &}
 
+  {& assets "slick_css" &}
+  <link rel="stylesheet" type="text/css" href="{$ ASSET_URL $}">
+  {& endassets &}
+
 
   {& endblock &}
   <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
@@ -70,15 +74,23 @@
   <home/>
 </div>
 {& block main_js &}
+
 {& assets "jquery" &}
 <script src="{$ ASSET_URL $}"></script>
 {& endassets &}
-{& assets "main_js" &}
-<script src="{$ ASSET_URL $}"></script>
-{& endassets &}
+
 {& assets "bootstrap_js" &}
 <script src="{$ ASSET_URL $}"></script>
 {& endassets &}
+
+{& assets "slick_js" &}
+<script src="{$ ASSET_URL $}"></script>
+{& endassets &}
+
+{& assets "main_js" &}
+<script src="{$ ASSET_URL $}"></script>
+{& endassets &}
+
 {& endblock &}
 </body>
 </html>

@@ -5,6 +5,7 @@ babel = get_filter('babel', presets='vue')
 
 assets = {
     "main_js": Bundle(
+        '../assets/yarn/vue-carousel/dist/vue-carousel.min.js',
         '../assets/js/home.js',
         '../assets/js/main.js',
         filters=babel,
@@ -34,6 +35,17 @@ assets = {
         "../assets/yarn/jquery/dist/jquery.js",
         filters="jsmin",
         output="js/jquery.js"
+    ),
+    "slick_js": Bundle(
+        "../assets/js/slick/slick.js",
+        filters="jsmin",
+        output="js/slick.js"
+    ),
+    "slick_css": Bundle(
+        "../assets/js/slick/slick.scss",
+        "../assets/js/slick/slick-theme.scss",
+        filters="cssmin",
+        output="css/slick.css"
     ),
 }
 
