@@ -79,7 +79,7 @@ def get_duration_string(seconds):
         else:
             return ''
     except Exception as ex:
-        log(f"{ex}\n{traceback.format_exc()}")
+        # log(f"{ex}\n{traceback.format_exc()}")
         return ''  # duration not available
 
 

@@ -6,6 +6,8 @@ babel = get_filter('babel', presets='vue')
 assets = {
     "main_js": Bundle(
         '../assets/js/home.js',
+        '../assets/js/player.js',
+        '../assets/js/video_tile.js',
         '../assets/js/main.js',
         filters=babel,
         output="js/main.js"

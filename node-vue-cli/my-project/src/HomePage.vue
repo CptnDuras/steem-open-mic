@@ -27,8 +27,8 @@
                     <a v-if="v.video_type=='dtube'" :href="'https://d.tube/#!/v/' + v.author + '/' + v.permlink" target="_blank">
                       <b-img src='/dist/images/dtube-icon.png'/>
                     </a>
-                    <span v-if="v.video_type=='dlive'">
-                      <a v-if="v.video_id=='live'" :href="'https://www.dlive.io/#/livestream/' + v.author + '/' + v.permlink" target="_blank">
+                    <span v-if="v.video_type==='dlive'">
+                      <a v-if="v.video_id==='live'" :href="'https://www.dlive.io/#/livestream/' + v.author + '/' + v.permlink" target="_blank">
                         <b-img style="background:#AAFFAA" src='/dist/images/dlive-icon.png'/>
                       </a>
                       <a v-else :href="'https://www.dlive.io/#/video/' + v.author + '/' + v.permlink" target="_blank">

@@ -26,17 +26,19 @@
 </head>
 <body>
 {& include "vue/home.vue" &}
+{& include "vue/player.vue" &}
+{& include "vue/video_tile.vue" &}
 
 <div class="main-navigation">
 	<nav class="navbar navbar-expand-md navbar-dark bg-dark">
 	  <div class="container">
-	    <!-- Brand -->
+	    {## Brand ##}
         <a class="navbar-brand" href="#">Steem Open Mic</a>
-	    <!-- Hamburgler -->
+	    {## Hamburgler ##}
 	    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-	    <!-- Actual nav items -->
+	    {## Actual nav items ##}
       <div class="collapse navbar-collapse" id="main-nav">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item active">
@@ -64,7 +66,7 @@
 
 	  </div>
 	</nav>
-	<!-- end top navigation -->
+	{## end top navigation ##}
 </div>
 
 

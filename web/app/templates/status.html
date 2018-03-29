@@ -59,7 +59,7 @@
     var status_data = {};
 
     function get_data() {
-        $.get("{{ url_for('public.status_data') }}", function (data, status) {
+        $.get("{$ url_for('api.status_data') $}", function (data, status) {
             // console.log(`Data: ${data}\n Status: ${status}`);
             status_data = data;
         });
