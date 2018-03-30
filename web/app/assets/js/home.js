@@ -2,7 +2,7 @@ var home = Vue.component("home", {
     template: "#home",
     data(){
         return {
-            api_url: "/api/hot/videos",
+            api_url: "/api/videos/hot",
             hot_videos: [],
             current_video: null,
             player_show: false,

@@ -25,101 +25,109 @@ def get_block_num(block):
 
 
 # called whether adding from files or from the stream
-def add_block_content_to_db(block):
+def scan_block(block):
     block_number = int(block['previous'][:8], base=16) + 1
 
     # add qualifying posts, and for edited posts and comments, schedule updates
-    try:
-        for transaction in block['transactions']:
-            for o in transaction['operations']:
+    for transaction in block['transactions']:
+        for o in transaction['operations']:
+            try:
                 operation_type = o[0]
+                # fail right away if it's not a comment
+                if operation_type != "comment":
+                    continue
+
                 item = o[1]
 
-                if "author" not in item:
-                    return
+                # if there's no author, nor metadata, then get right on out of here
+                if "author" not in item or item["json_metadata"] == "false":
+                    continue
 
-                author = item['author']
-                permlink = item['permlink']
+                # check to see if the transaction has the right tag(s)
+                if not find_tags(item):
+                    continue
 
-                # check for votes for existing video posts, and if so schedule Steem RPC update
-                # if operation_type == 'vote':
-                #     try:
-                #         with DBConnection() as db:
-                #             post = db.session.query(
-                #                 Post
-                #             ).filter(
-                #                 and_(
-                #                     Post.author == author,
-                #                     Post.permlink == permlink
-                #                 )
-                #             ).first()
-                #
-                #             if post:
-                #                 post.pending_steem_info_update = True
-                #                 post.steem_info_update_requested = datetime.now()
-                #                 db.session.commit()
-                #
-                #     except Exception as ex:
-                #         log('Monitor error when evaluating vote...')
-                #         log(str(ex))
+                # if we've gotten here, then we have the right item
+                log(f"Found openmic @ {block_number}")
 
-                # check for existing post (or add skeleton record if not present) and schedule updates
+                # try to insert a record into the DB
+                insert_record(item, block_number)
+            except Exception as ex:
+                log(f'ERROR:{ex}\n{traceback.format_exc()}')
 
-                if operation_type == 'comment' and o[1]["json_metadata"] != "false":
-                    try:
-                        try:
-                            metadata = json.loads(json.loads(item["json_metadata"]))
-                        except Exception as ex1:
-                            try:
-                                metadata = json.loads(item["json_metadata"])
-                            except Exception as ex2:
-                                return
 
-                        try:
-                            if "tags" not in metadata or "openmic" not in metadata["tags"] or item['parent_author'] != '':
-                                return
-                        except Exception as ex:
-                            log(f"{ex} {traceback.format_exc()}")
+def find_tags(transaction, tags=None):
+    # if no tags are provided, set a default
+    if tags is None:
+        tags = ["openmic"]
 
-                        log(f"Found openmic @ {block_number}")
+    # load metadata
+    metadata = load_metadata(transaction)
 
-                        with DBConnection() as db:
-                            post = db.session.query(
-                                Post
-                            ).filter(
-                                and_(
-                                    Post.author == author,
-                                    Post.permlink == permlink
-                                )
-                            ).first()
+    # Check to see if the metadata is ok
+    if metadata is None or "tags" not in metadata or transaction['parent_author'] != '':
+        return False
 
-                            if post:
-                                post.pending_steem_info_update = True
-                                post.steem_info_update_requested = datetime.now()
-                                post.pending_video_info_update = True
-                                post.video_info_update_requested = datetime.now()
-                                db.session.commit()
-                                return
+    # now loop through the tags on the post to see if they're acceptable
+    for tag in metadata["tags"]:
+        if tag in tags:
+            # if we find a valid tag, return True
+            return True
 
-                            video_type, video_id, category = get_valid_video(item)
-                            if video_type and video_id and category:
-                                post_skeleton = Post(
-                                    author=author,
-                                    permlink=permlink,
-                                    category=category,
-                                    video_type=video_type,
-                                    video_id=video_id,
-                                    block_number=block_number
-                                )
-                                db.session.add(post_skeleton)
-                                db.session.commit()
+    # if we get here, there's no hope of adding this item
+    return False
 
-                    except Exception as ex:
-                        log('Monitor error when evaluating comment...')
-                        log(f"{ex}\n{traceback.format_exc()}")
 
-    except Exception as ex:
-        log(f'BIG ERROR:{ex}\n{traceback.format_exc()}')
+def load_metadata(transaction):
+    """
+    Try loading metadata for an item. This is wonky because sometimes data is double encoded
+    :param transaction: transaction to load metadata for
+    :return: dict of transaction
+    """
+    try:
+        # double load the metadata since that occasionally
+        return json.loads(json.loads(transaction["json_metadata"]))
+    except Exception as ex1:
+        try:
+            return json.loads(transaction["json_metadata"])
+        except Exception as ex2:
+            return None
+
+
+def insert_record(item, block_number):
+    author = item['author']
+    permlink = item['permlink']
+
+    with DBConnection() as db:
+        post = db.session.query(
+            Post
+        ).filter(
+            and_(
+                Post.author == author,
+                Post.permlink == permlink
+            )
+        ).first()
+
+        if post:
+            post.pending_steem_info_update = True
+            post.steem_info_update_requested = datetime.now()
+            post.pending_video_info_update = True
+            post.video_info_update_requested = datetime.now()
+            db.session.commit()
+            return
+
+        video_type, video_id, category = get_valid_video(item)
+        if video_type and video_id and category:
+            post_skeleton = Post(
+                author=author,
+                permlink=permlink,
+                category=category,
+                video_type=video_type,
+                video_id=video_id,
+                block_number=block_number
+            )
+            db.session.add(post_skeleton)
+            db.session.commit()
 
 
 # todo - check for JSON block files to prepopulate DB
@@ -170,7 +178,7 @@ class StreamingBlockSyncThread(Thread):
                         log('Read Block:' + str(block_number))
 
                     try:
-                        add_block_content_to_db(block)
+                        scan_block(block)
                         # log('Read Block:' + str(block_number))
                     except Exception as ex:
                         log('ERROR: Problem adding block to database.')

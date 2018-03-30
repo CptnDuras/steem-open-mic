@@ -1,85 +1,67 @@
 import json
+import math
 import traceback
 
 import pandas as pd
-from flask import jsonify, Blueprint, request
+from flask import jsonify, Blueprint, request, abort
 from sqlalchemy import and_
 from steem import steem
-from datetime import datetime
-
+from datetime import date, datetime
 from config import DEBUGGING_KEY
 from models import Post, LastBlock
 from utilities import apply_filter_to_query, create_video_summary_fields, apply_sort_to_query, get_age_string, \
-    get_payout_string, markdown_to_safe_html, get_sparkline_data_from_content, log
+    get_payout_string, markdown_to_safe_html, get_sparkline_data_from_content, log, DBConnection
 
 api_blueprint = Blueprint("api", __name__)
 
 
-@api_blueprint.route('/api/trending/videos/<limit>', methods=['GET'])
-@api_blueprint.route('/api/trending/videos', methods=['GET'])
-def trending_videos(limit="30"):
-    from web.app import db
+def get_current_week():
+    d0 = date(2016, 9, 25)
+    d1 = datetime.now().date()
+    delta = d1 - d0
+    return math.floor(delta.days/7)
 
-    limit = int(limit)
+
+@api_blueprint.route('/api/videos/<type>/<limit>', methods=['GET'])
+@api_blueprint.route('/api/videos/<type>', methods=['GET'])
+def videos(type, limit=30):
+    order_types = {
+        "hot": Post.total_payout_value.desc(),
+        "new": Post.created.desc(),
+        "trending": Post.trending_score.desc()
+    }
+
+    if type not in order_types.keys():
+        return abort(500)
+
+    limit = int(limit * 1.2)
+    order = order_types[type]
     filter_data = {}
-    query = db.session.query(Post)
-    # get more records than needed as post query filters may remove some
-    query = query.order_by(Post.trending_score.desc()).limit(int(limit * 1.2))
-
-    data_frame = pd.read_sql(query.statement, db.session.bind)
-    summary = create_video_summary_fields(data_frame, filter_data)
-    output = json.loads(summary.head(limit).to_json(orient='records'))
-
-    return jsonify(output)
-
-
-@api_blueprint.route('/api/hot/videos/<limit>', methods=['GET'])
-@api_blueprint.route('/api/hot/videos', methods=['GET'])
-def hot_videos(limit="30"):
-    from web.app import db
-    limit = int(limit)
-    filter_data = {}
-    query = db.session.query(Post)
+    current_week = get_current_week()
 
     try:
-        # get more records than needed as post query filters may remove some
-        query = query.order_by(Post.hot_score.desc()).limit(int(limit * 1.2))
+        with DBConnection() as db:
+            query = db.session.query(Post)
 
-        data_frame = pd.read_sql(query.statement, db.session.bind)
-        summary = create_video_summary_fields(data_frame, filter_data)
-        output = json.loads(summary.head(limit).to_json(orient='records'))
+            query = query.filter(
+                # only query the current week
+                Post.title.like('%{}%'.format(current_week))
+            ).order_by(
+                # Order by the correct type
+                order
+            ).limit(
+                # limit appropriately
+                limit
+            )
 
-        return jsonify(output)
-    except Exception as e:
-        return jsonify(str(e))
-
-
-@api_blueprint.route('/api/new/videos/<limit>', methods=['GET'])
-@api_blueprint.route('/api/new/videos', methods=['GET'])
-def new_videos(limit="30"):
-    from web.app import db
-
-    limit = int(limit)
-    filter_data = {}
-    try:
-        query = db.session.query(Post)
-
-        # get more records than needed as post query filters may remove some
-        query = query.order_by(
-            Post.created.desc()
-        ).limit(
-            int(limit * 1.2)
-        )
-
-        # we'll pass our SQL statement to pandas to get a data_frame
-        data_frame = pd.read_sql(query.statement, db.session.bind)
-        summary = create_video_summary_fields(data_frame, filter_data)
-        # this is bad, converting json, back to a dict, back to json
-        output = json.loads(summary.head(limit).to_json(orient='records'))
+            data_frame = pd.read_sql(query.statement, db.session.bind)
+            summary = create_video_summary_fields(data_frame, filter_data)
+            output = json.loads(summary.head(limit).to_json(orient='records'))
 
         return jsonify(output)
-    except Exception as e:
-        return jsonify(str(e))
+    except Exception as ex:
+        return jsonify(str(ex))
+
 
 
 @api_blueprint.route('/api/search/<search_terms>/<limit>', methods=['GET', 'POST'])
