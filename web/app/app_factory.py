@@ -9,7 +9,7 @@ from flask_uploads import UploadSet, IMAGES, configure_uploads
 from steem import Steem
 
 from bundles import register_assets
-from web.app.views import public_blueprint, api_blueprint
+from .views import public_blueprint, api_blueprint
 from models import db
 
 bcrypt = Bcrypt()

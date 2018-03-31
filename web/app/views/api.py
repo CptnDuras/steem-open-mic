@@ -67,8 +67,6 @@ def videos(type, limit=30):
 @api_blueprint.route('/api/search/<search_terms>/<limit>', methods=['GET', 'POST'])
 @api_blueprint.route('/api/search/<search_terms>', methods=['GET', 'POST'])
 def search(search_terms, limit='50'):
-    from web.app import db
-
     limit = int(limit)
     if request.method == 'GET':
         filter_data = json.loads(request.args.get("json"))
@@ -81,13 +79,13 @@ def search(search_terms, limit='50'):
 
         title_filter = Post.title_ts_vector.match(modified_search_terms, postgresql_regconfig='english')
         tags_filter = Post.tags_ts_vector.match(modified_search_terms, postgresql_regconfig='english')
+        with DBConnection() as db:
+            query = db.session.query(Post).filter(author_filter | title_filter | tags_filter)
+            query = apply_filter_to_query(query, filter_data)
+            query = apply_sort_to_query(query, filter_data)
+            query = query.limit(int(limit * 1.2))  # get more records than needed as post query filters may remove some
 
-        query = db.session.query(Post).filter(author_filter | title_filter | tags_filter)
-        query = apply_filter_to_query(query, filter_data)
-        query = apply_sort_to_query(query, filter_data)
-        query = query.limit(int(limit * 1.2))  # get more records than needed as post query filters may remove some
-
-        df = pd.read_sql(query.statement, db.session.bind)
+            df = pd.read_sql(query.statement, db.session.bind)
         df = create_video_summary_fields(df, filter_data)
         df = df.head(limit)
 
@@ -99,15 +97,14 @@ def search(search_terms, limit='50'):
 
 @api_blueprint.route('/api/video/@<author>/<permlink>')
 def video(author=None, permlink=None):
-    from web.app import db
-
-    post = db.session.query(
-        Post
-    ).filter(
-        and_(Post.author == author, Post.permlink == permlink)
-    ).order_by(
-        Post.video_info_update_requested
-    ).first()
+    with DBConnection() as db:
+        post = db.session.query(
+            Post
+        ).filter(
+            and_(Post.author == author, Post.permlink == permlink)
+        ).order_by(
+            Post.video_info_update_requested
+        ).first()
 
     if post:
         post_dict = {
@@ -207,27 +204,28 @@ def raw_replies(author, permlink):
 
 @api_blueprint.route(f'/api/{DEBUGGING_KEY}/status/data')
 def status_data():
-    from web.app import db, steem
+    from web.app import steem
     # get the last block from the DB
-    try:
-        last_block = db.session.query(LastBlock).first().number
-    except:
-        last_block = 0
+    with DBConnection() as db:
+        try:
+            last_block = db.session.query(LastBlock).first().number
+        except:
+            last_block = 0
 
-    # get the last block from steem
-    head_block = steem.head_block_number
-    # calculate the delay between the last block on the chain, and the DB
-    db_lag = (head_block - last_block) * 3
-    # Get the number of posts in the DB
-    db_posts = db.session.query(Post.id).count()
-    # See how many posts are needing steem update
-    pending_steem = db.session.query(Post.id).filter(
-        Post.pending_steem_info_update == True
-    ).count()
-    # see how many posts are needing video update
-    pending_video = db.session.query(Post.id).filter(
-        Post.pending_video_info_update == True
-    ).count()
+        # get the last block from steem
+        head_block = steem.head_block_number
+        # calculate the delay between the last block on the chain, and the DB
+        db_lag = (head_block - last_block) * 3
+        # Get the number of posts in the DB
+        db_posts = db.session.query(Post.id).count()
+        # See how many posts are needing steem update
+        pending_steem = db.session.query(Post.id).filter(
+            Post.pending_steem_info_update == True
+        ).count()
+        # see how many posts are needing video update
+        pending_video = db.session.query(Post.id).filter(
+            Post.pending_video_info_update == True
+        ).count()
 
     data = {
         "head_block": head_block,
