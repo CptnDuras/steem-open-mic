@@ -1,4 +1,6 @@
 bcrypt
+bleach
+dotenv-config
 Flask
 Flask-Assets
 Flask-Bcrypt
@@ -12,6 +14,7 @@ Flask-Social
 Flask-SQLAlchemy
 Flask-Uploads
 Flask-WTF
+markdown
 psycopg2>=2.7,<2.8 --no-binary psycopg2
 steem
 social-auth-steemconnect

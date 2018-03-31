@@ -4,6 +4,11 @@
 #
 ##########################################################
 import os
+from dotenv import load_dotenv
+from pathlib import Path
+
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # Set defaults if environment strings aren't set. This is used for easier developer setup
 if "PRIMARY_STEEM_RPC_NODE" not in os.environ:
