@@ -206,7 +206,7 @@ class PostUpdateThread(Thread):
                     if new_post == "delete":
                         db.session.delete(post)
                         db.session.commit()
-                        return
+                        continue
 
                     post = new_post
                     post.pending_steem_info_update = False
@@ -216,7 +216,7 @@ class PostUpdateThread(Thread):
                     if new_post == "delete":
                         db.session.delete(post)
                         db.session.commit()
-                        return
+                        continue
 
                     post = new_post
 

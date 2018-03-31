@@ -89,15 +89,12 @@ var home = Vue.component("home", {
             });
         },
         addVideoMeta(video){
-            var img = "";
+            var img = video.video_thumbnail_image_url;
             var url = "";
 
             if(video.video_type === "dtube"){
                 url = 'https://d.tube/#!/v/' + video.author + '/' + video.permlink;
-                img = "/static/img/dtube-icon.png";
             }else if(video.video_type === "dlive"){
-                img = "/static/img/dlive-icon.png";
-
                 if(video.video_id === 'live') {
                     url = 'https://www.dlive.io/#/livestream/' + video.author + '/' + video.permlink;
                 }else{

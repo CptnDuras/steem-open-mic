@@ -9,11 +9,21 @@
     <div class="card-body player-body">
       <div class="poo">
         <div class="video">
-          <iframe title="Video player" class="youtube-player" type="text/html"
+          <iframe v-if="video.video_type === 'youtube'"
+              title="Video player" class="youtube-player" type="text/html"
+
                   :src="video.url"
                   :height="this.height"
                   :width="this.width"
-                  frameborder="0" allowFullScreen style="display: block; margin: auto;"></iframe>
+                  frameborder="0" allowFullScreen style="display: block; margin: auto;">
+          </iframe>
+          <iframe v-else
+              title="Video player" class="youtube-player" type="text/html"
+                  :src="'https://ipfs.io/ipfs/' + video.video_id"
+                  :height="this.height"
+                  :width="this.width"
+                  frameborder="0" allowFullScreen style="display: block; margin: auto;">
+          </iframe>
         </div>
         <p>{{ video.title }}</p>
       </div>

@@ -161,9 +161,9 @@ class StreamingBlockSyncThread(Thread):
                 log(f'Starting streaming from (specified) block: {self.start_block}')
 
                 for blockcount, block in enumerate(b.stream_from(start_block=self.start_block, full_blocks=True)):
-                    block_number = self.start_block + blockcount
+                    block_number = int(block['block_id'][:8], base=16)
 
-                    if (self.start_block + blockcount) % 100 == 0:
+                    if block_number % 100 == 0:
                         # save our progress to the DB
                         with DBConnection() as db:
                             last_block = db.session.query(LastBlock).first()
@@ -173,6 +173,8 @@ class StreamingBlockSyncThread(Thread):
                                 last_block = LastBlock(block_number)
                             db.session.add(last_block)
                             db.session.commit()
+
+                            self.start_block = block_number
 
                         # display the last saved block
                         log('Read Block:' + str(block_number))

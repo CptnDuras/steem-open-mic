@@ -58,6 +58,7 @@ class Post(db.Model):
     video_duration_seconds = db.Column(db.Integer, nullable=True)
     video_post_publish_delay_seconds = db.Column(db.Integer, nullable=True)
     description = db.Column(db.String, nullable=True)
+    som_week = db.Column(db.Integer, nullable=True)
 
     # experimental fields for basic collarorative filter and votes sparkline
     voters_list = db.Column(db.String, nullable=True)
