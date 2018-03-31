@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "bootstrap": "^4.0.0",
+    "bulma": "^0.6.2",
+    "font-awesome": "^4.7.0",
+    "fontawesome": "^4.7.2",
+    "jquery": "^3.3.1",
+    "ngrok": "^3.0.0",
+    "popper": "^1.0.1",
+    "slick": "^1.12.2",
+    "vue-carousel": "^0.6.9",
+    "vue-slick": "^1.1.12",
+    "webpack": "^4.1.1"
+  }
+}
